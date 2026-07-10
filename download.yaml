@@ -1,0 +1,29 @@
+# Download configuration for semmeddb-procedure-ingest
+#
+# OPEN, redistributable sources only. License-gated sources (SNOMED CT RF2,
+# UMLS MRCONSO) are NOT listed here — they are fetched by scripts/fetch_licensed.py
+# using UMLS_API_KEY, cached locally, gitignored, and NEVER re-emitted. See ARCHITECTURE.md.
+
+downloads:
+  # --- Primary source: the LLM-verified SemMedDB subset (procedure/disease predications) ---
+  # Too large + license-flavored for a GitHub release; host in a data bucket (S3/GCS) or Zenodo.
+  # TODO: replace with the published bucket/Zenodo URL once uploaded.
+  - url: "{SEMMEDDB_SUBSET_URL}"          # e.g. https://<bucket>/semmeddb-llm-verified/results_no_abstract_with_names.parquet
+    local_name: "data/semmeddb_subset.parquet"
+
+  # --- NCIt (public domain): code->UMLS_CUI (<P207>) + procedure hierarchy for structural IC ---
+  - url: "https://evs.nci.nih.gov/ftp1/NCI_Thesaurus/Thesaurus.FLAT.zip"
+    local_name: "data/ncit_flat.zip"
+  - url: "https://evs.nci.nih.gov/ftp1/NCI_Thesaurus/Thesaurus.OWL.zip"
+    local_name: "data/ncit_owl.zip"
+
+  # --- Monarch mapping commons (open): UMLS/SNOMED -> MONDO, SNOMED -> HP ---
+  - url: "https://raw.githubusercontent.com/monarch-initiative/monarch-mapping-commons/main/mappings/mondo.sssom.tsv"
+    local_name: "data/mondo.sssom.tsv"
+  - url: "https://raw.githubusercontent.com/monarch-initiative/monarch-mapping-commons/main/mappings/hpo-snomed.sssom.tsv"
+    local_name: "data/hpo-snomed.sssom.tsv"
+
+  # --- MONDO+HP graph (open): subclass edges for disease/phenotype structural IC ---
+  # (pulled from the Monarch KG / phenio; adjust to your pinned kg-phenio release)
+  - url: "{MONDO_EDGES_URL}"              # e.g. mondo_edges.tsv (biolink:subclass_of edges)
+    local_name: "data/mondo_edges.tsv"

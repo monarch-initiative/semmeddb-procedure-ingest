@@ -1,0 +1,41 @@
+# semmeddb-procedure-ingest
+
+SemMedDB literature-derived procedure→disease/phenotype (diagnoses/treats) edges, grounded to SNOMED/NCIT/MONDO/HP with NodeNorm+MRCONSO and structural-IC filtering
+
+## Setup
+
+```bash
+just setup
+```
+
+## Usage
+
+### Download source data
+
+```bash
+just download
+```
+
+### Run transforms
+
+```bash
+# Run all transforms
+just transform-all
+
+# Run specific transform
+just transform <transform_name>
+```
+
+### Run tests
+
+```bash
+just test
+```
+
+## Adding New Ingests
+
+Use the `create-koza-ingest` Claude skill to add new ingests to this repository.
+
+## License
+
+MIT

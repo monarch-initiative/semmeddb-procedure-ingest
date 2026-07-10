@@ -1,0 +1,13 @@
+_commit: 1e35b56
+_src_path: gh:monarch-initiative/koza-ingest-template
+copyright_year: '2026'
+email: kevin@tislab.org
+full_name: Kevin Schaper
+github_handle: kevinschaper
+github_org: tis-lab
+license: MIT
+project_description: SemMedDB literature-derived procedure→disease/phenotype (diagnoses/treats)
+    edges, grounded to SNOMED/NCIT/MONDO/HP with NodeNorm+MRCONSO and structural-IC
+    filtering
+project_name: semmeddb-procedure-ingest
+project_slug: semmeddb_procedure_ingest

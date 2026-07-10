@@ -1,0 +1,45 @@
+name: "procedure_to_disease"
+
+# Reads the preprocessing output (scripts/preprocess.py), NOT a raw source:
+# one row per clean, grounded, IC-scored edge.
+reader:
+  files:
+    - "../data/procedure_to_disease.tsv"
+  format: "csv"
+  delimiter: "\t"
+  header_mode: 0
+  columns:
+    - "procedure_id"
+    - "procedure_label"
+    - "predicate"
+    - "disease_id"
+    - "disease_label"
+    - "disease_category"
+    - "support_pmids"
+    - "procedure_ic"
+    - "disease_ic"
+    - "publications"
+
+transform: {}   # code auto-detected: procedure_to_disease.py
+
+writer:
+  # output format is set via the CLI (-f jsonl); see justfile
+  node_properties:
+    - "id"
+    - "category"
+    - "name"
+    - "provided_by"
+  edge_properties:
+    - "id"
+    - "category"
+    - "subject"
+    - "predicate"
+    - "original_predicate"
+    - "object"
+    - "publications"
+    - "primary_knowledge_source"
+    - "aggregator_knowledge_source"
+    - "knowledge_level"
+    - "agent_type"
+  min_node_count: 0
+  min_edge_count: 20000
