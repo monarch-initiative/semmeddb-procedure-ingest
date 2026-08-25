@@ -2,14 +2,15 @@
 """
 Publish this build's artifacts to the BDC bucket.
 
-Layout: ONE top-level prefix per ingest repo, dated immutable builds, no
-latest/ mirror — consumers resolve the newest dated prefix (or pin a date):
+Layout: ONE top-level prefix per ingest repo — dated immutable builds plus a
+latest/ mirror of the newest one. Consumers read latest/ (or pin a date):
 
     gs://monarch-bdc-kg/semmeddb/<YYYY-MM-DD>/
         procedure_to_disease_ncit_{nodes,edges}.jsonl        open tier
         procedure_to_disease_snomedct_{nodes,edges}.jsonl    RESTRICTED tier
         release-metadata.yaml                                kozahub receipt
         README.md                                            licensing + QA caveats
+    gs://monarch-bdc-kg/semmeddb/latest/                     clean rsync -d mirror
 
 Both license tiers ship in one dated dir, distinguished by filename; the
 README records the per-tier licensing so an artifact found in the bucket is
@@ -122,9 +123,12 @@ def main() -> None:
     )
 
     dated = f"{BUCKET}/{INGEST}/{date}/"
+    latest = f"{BUCKET}/{INGEST}/latest/"
     run(["gsutil", "-m", "rsync", "-d", str(stage), dated], dry)
+    # -d makes latest/ a clean mirror, not an accumulating pile
+    run(["gsutil", "-m", "rsync", "-d", dated, latest], dry)
 
-    print(f"\ndone: {dated}\nconsumers resolve the newest dated prefix (or pin); dated prefixes are the audit trail.")
+    print(f"\ndone: {dated} (+ latest/)\nconsumers read latest/ or pin a date; dated prefixes are the audit trail.")
 
 
 if __name__ == "__main__":
