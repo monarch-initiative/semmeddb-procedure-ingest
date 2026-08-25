@@ -61,11 +61,31 @@ Set by `OUTPUT_TIER` (default `restricted`); the build prints which tier it prod
 - **`open`** → GitHub release / kghub. SNOMED/UMLS labels blanked (codes only);
   NCIT/MONDO/HP labels pass through. License-clean and publishable like any Monarch ingest.
 
+## Split output: NCIT and SNOMED
+
+The export is split by SUBJECT namespace into two transforms:
+
+| file | subjects | edges | licensing |
+|---|---|---|---|
+| `procedure_to_disease_ncit` | NCIT | 23,076 | **fully open** — NCIT is public domain and objects are MONDO/HP, so this artifact carries no licensed text regardless of `OUTPUT_TIER` |
+| `procedure_to_disease_snomedct` | SNOMED CT | 5,055 | **restricted** under `OUTPUT_TIER=restricted`; SNOMED description text is licensed |
+
+Subjects that ground to neither are dropped: a UMLS-only CUI has no node in any target
+KG, so those edges cannot merge and are out of scope. That removes 6,602 edges from
+1,023 subjects. The cost is real — it includes the **electrocardiogram** (157 edges,
+5,482 PMIDs), whose CUI `C0013798` carries only a MeSH code, and every `Device` and
+`Activity` subject, all of which were UMLS-only.
+
+The split is also the cleaner licensing boundary: rather than one artifact whose
+publishability depends on an env var, the NCIT half is always publishable and only the
+SNOMED half needs the gated bucket.
+
 ## Shipping filter
 
 Applied in `assemble()`, so `data/procedure_to_disease.tsv` IS the shipped set; the full
 unfiltered edge set stays in the duckdb and the `procedure_disease_clean.tsv` sidecar.
 
+0. **Subject namespace ∈ {NCIT, SNOMEDCT}** — see the split above.
 1. **Object namespace ∈ {MONDO, HP}.** Everything else is a concept Mondo has no term
    for — NodeNorm returns MONDO whenever one exists, so UMLS/NCIT/EFO objects are exactly
    the residue it could not collapse, and <0.1% are rescuable via mondo.sssom or mondo.obo
@@ -96,6 +116,80 @@ kept "Operative Surgical Procedures."** `min()`, `max()` and qualifier-excluded 
 all still rank generic above specific, so it is unsalvageable by tuning. Genericness is a
 curation problem here, not a metric problem. `procedure_ic` remains in the sidecar as a
 descriptive column — do not filter on it.
+
+## Testing and verification
+
+Four layers, in increasing order of what they catch.
+
+### 1. Unit tests — `just test`
+9 pytest cases over the Koza transform: predicate mapping, `original_predicate` CURIEs,
+node classes per `procedure_category`, SNOMED label blanking, node dedup across rows,
+deterministic edge ids, `evidence_count`/`publications` agreement, and the drop rules.
+Fast, but they only cover the thin transform — not the preprocess, which is where the
+real bugs have been.
+
+### 2. Build-time guards — these fail the build, not a test run
+- **publications**: every edge must carry exactly its `predicted='True'` PMIDs. Checked
+  BEFORE the `COPY`, so a failure never leaves a corrupt TSV on disk.
+- **duplicate triples**: assemble aggregates at the resolved-id level and refuses to emit
+  if any duplicate `(procedure, predicate, disease)` survives.
+- **NodeNorm snapshot**: `build_node_categories.py` exits rather than silently falling
+  through to the live API while `versions.py` reports the version as pinned.
+- **OBO versions**: `versions.py` raises rather than emitting `version: unknown`.
+- **licensed downloads**: `fetch_licensed.py` validates the SNOMED zip is actually a zip,
+  since a bad UTS ticket returns an HTML login page with HTTP 200 that would otherwise be
+  cached forever.
+
+### 3. Cold-build verification
+Warm rebuilds hide real defects. Clear `data/semmeddb.duckdb`, `data/mondo_edges.tsv`,
+`data/obsolete_replaced_by.tsv`, `data/ontology_labels.tsv` and `output/`, then run
+`just run`. Bugs that ONLY a cold build surfaced:
+- stage order was wrong (`ncit_map_and_ic` needs `final_object_id`, produced two stages later)
+- the blocklist silently failed open when a CUI resolved to a different procedure id
+- duplicate edge ids from distinct CUIs collapsing onto one resolved id
+
+### 4. Determinism — run TWO cold builds under DIFFERENT `PYTHONHASHSEED`
+
+```bash
+for seed in 1 999; do
+  rm -f data/semmeddb.duckdb data/mondo_edges.tsv data/obsolete_replaced_by.tsv \
+        data/ontology_labels.tsv && rm -rf output
+  PYTHONHASHSEED=$seed SUBSET_RELEASE_TAG=<tag> just run
+  cp output/*_edges.jsonl output/*_nodes.jsonl data/procedure_to_disease.tsv \
+     data/cui_xref.tsv /tmp/det_$seed/
+done
+# then diff the two directories — they must be byte-identical
+```
+
+**Varying the seed is the point.** Two same-seed cold builds passed while the pipeline was
+still nondeterministic, because they happened to draw the same hash ordering. Compare
+`cui_xref.tsv` as well as the outputs — that is where the nondeterminism originated.
+
+Root causes found and fixed this way: `umls_crosswalk` selecting a representative MRCONSO
+string by iterating a **set of tuples** (hash-order dependent, and `stamp_best_ic` keys
+qualifier detection on that string, so it changed which SNOMED id a procedure got);
+`any_value()` in duckdb, which picks an arbitrary row per group, used for labels in three
+stages; and `arg_max(code, ic)` tie-breaking in the SNOMED code selection.
+
+### 5. Sampling QA — the part no automated check replaces
+
+Edge correctness is not machine-checkable. Periodically draw a stratified random sample
+(by `publication_count` band × predicate, fixed seed), fetch the supporting papers from
+PubMed, and classify each edge CORRECT / WRONG / OVER-GENERALIZED / VACUOUS.
+
+Measured on the 2026-08 build: `diagnoses` ~8% broad error, `treats` ~30-37% broad error.
+**The predicate, not the support count, is the fault line.** Most failures are vacuous or
+over-generalized rather than false.
+
+**Keep these canaries.** Each looks wrong to a non-specialist and is correct; a filter that
+drops them is a bad filter:
+- `Ablation Therapy treats vitiligo` — ablative resurfacing for melanocyte grafting
+- `Advance [medical device] treats stress urinary incontinence` — the AdVance male sling
+- `Autopsy diagnoses Down syndrome` — fetopathological examination
+- `Gastrectomy treats chronic kidney disease` — bariatric surgery improves kidney function
+- **`Electrocardiogram`** — ungrounded in NCIT/SNOMED and typed `Intellectual Product` in
+  UMLS, so grounding-status and semantic-type rules both delete it. It was the canary that
+  condemned the `best_ic` filter.
 
 ## Reproducibility
 

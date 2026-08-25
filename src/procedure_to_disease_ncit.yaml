@@ -1,0 +1,49 @@
+name: "procedure_to_disease_ncit"
+
+# Reads the preprocessing output (scripts/preprocess.py), NOT a raw source:
+# one row per clean, grounded edge whose SUBJECT is a NCIT term.
+# OPEN — NCIT labels are public domain; publishable as a normal Monarch ingest.
+reader:
+  files:
+    - "../data/procedure_to_disease_ncit.tsv"
+  format: "csv"
+  delimiter: "\t"
+  header_mode: 0
+  columns:
+    - "procedure_id"
+    - "procedure_label"
+    - "procedure_category"
+    - "predicate"
+    - "disease_id"
+    - "disease_label"
+    - "disease_category"
+    - "support_pmids"
+    - "procedure_ic"
+    - "disease_ic"
+    - "publications"
+
+transform:
+  code: "procedure_to_disease.py"   # shared by both namespace splits
+
+writer:
+  # output format is set via the CLI (-f jsonl); see justfile
+  node_properties:
+    - "id"
+    - "category"
+    - "name"
+    - "provided_by"
+  edge_properties:
+    - "id"
+    - "category"
+    - "subject"
+    - "predicate"
+    - "original_predicate"
+    - "object"
+    - "publications"
+    - "evidence_count"
+    - "primary_knowledge_source"
+    - "aggregator_knowledge_source"
+    - "knowledge_level"
+    - "agent_type"
+  min_node_count: 0
+  min_edge_count: 15000

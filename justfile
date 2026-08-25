@@ -4,7 +4,7 @@
 PKG := "src"
 
 # Explicitly enumerate transforms (add new ingests here)
-TRANSFORMS := "procedure_to_disease"
+TRANSFORMS := "procedure_to_disease_ncit procedure_to_disease_snomedct"
 
 # List all commands
 _default:

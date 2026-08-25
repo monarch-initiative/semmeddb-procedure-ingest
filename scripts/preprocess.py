@@ -60,6 +60,14 @@ HERE = Path(__file__).resolve().parent
 # 2. Structural IC: drop terms too generic to assert anything. NULL fails these
 #    comparisons, which is intended — an unscored term is not a defensible one.
 OBJECT_NAMESPACES = ("MONDO", "HP")
+
+# Subjects must ground to an ontology we actually publish against. A UMLS-only CUI
+# has no node in any target KG, so those edges are out of scope regardless of quality
+# — this drops 6,602 edges from 1,023 subjects. The cost is real and includes the
+# electrocardiogram (157 edges / 5,482 PMIDs), whose CUI carries only a MeSH code.
+# Output is split by subject namespace, which also happens to line up with licensing:
+# the NCIT half is open, the SNOMED half is not.
+SUBJECT_NAMESPACES = ("NCIT", "SNOMEDCT")
 MIN_DISEASE_IC = 6.0     # object_ic (MONDO/HP structural IC)
 
 # NO procedure-IC threshold. `best_ic` is structural IC over SNOMED/NCIT, and it does
@@ -134,6 +142,10 @@ def assemble():
     ns_pred = " OR ".join(
         f"p.final_object_id LIKE '{ns}:%'" for ns in OBJECT_NAMESPACES
     )
+    subj_pred = " OR ".join(
+        f"coalesce(u.ncit, p.proc_snomed_id_v, p.subject_id) LIKE '{ns}:%'"
+        for ns in SUBJECT_NAMESPACES
+    )
     con.execute(f"""
       CREATE OR REPLACE TEMP TABLE blocked AS
       SELECT subject_cui AS id FROM read_csv('{BLOCKLIST}', delim='\t', header=true)
@@ -171,6 +183,7 @@ def assemble():
           LEFT JOIN onto_label op ON op.id = coalesce(u.ncit, p.proc_snomed_id_v, p.subject_id)
           WHERE p.predicate IN ('diagnoses','treats')
             AND ({ns_pred})
+            AND ({subj_pred})
             AND p.object_ic >= {MIN_DISEASE_IC}
             -- keyed on the UMLS CUI, NOT the resolved id: which NCIT/SNOMED code a CUI
             -- resolves to can shift between builds, and a resolved-id blocklist then
@@ -198,6 +211,22 @@ def assemble():
         ORDER BY procedure_id, predicate, disease_id   -- stable file byte-for-byte
       ) TO '{HERE.parent / "data" / "procedure_to_disease.tsv"}' (HEADER, DELIMITER '\t')
     """)
+
+    # Split by subject namespace into the per-vocabulary transform inputs.
+    for ns in SUBJECT_NAMESPACES:
+        target = HERE.parent / "data" / f"procedure_to_disease_{ns.lower()}.tsv"
+        con.execute(f"""
+          COPY (
+            SELECT * FROM read_csv_auto(
+              '{HERE.parent / "data" / "procedure_to_disease.tsv"}',
+              delim='\t', header=true, all_varchar=true)
+            WHERE procedure_id LIKE '{ns}:%'
+            ORDER BY procedure_id, predicate, disease_id
+          ) TO '{target}' (HEADER, DELIMITER '\t')
+        """)
+        k = con.execute(f"""SELECT count(*) FROM read_csv_auto('{target}',
+              delim='\t', header=true, all_varchar=true)""").fetchone()[0]
+        print(f"[preprocess] wrote {target.name} ({k:,} edges)")
 
     emitted, triples = con.execute(f"""
       SELECT count(*), count(DISTINCT (procedure_id, predicate, disease_id))
