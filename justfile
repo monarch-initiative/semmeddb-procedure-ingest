@@ -52,6 +52,12 @@ transform-all: preprocess
 metadata:
     uv run python scripts/write_metadata.py
 
+# Publish output/ to the BDC bucket as <ingest>/<date>/ and a clean <ingest>/latest/
+# Pass a date to override, e.g. `just publish 2026-08-25`. DRY_RUN=1 to preview.
+[group('ingest')]
+publish DATE="":
+    uv run python scripts/publish.py {{DATE}}
+
 # Run full pipeline: install, download, transform, metadata, test
 [group('ingest')]
 run: test transform-all metadata

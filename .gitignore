@@ -53,4 +53,4 @@ data/licensed/
 SnomedCT_*
 
 # uv
-uv.lock
+# uv.lock IS tracked — this ingest pins every input; the dependency set is one of them.
