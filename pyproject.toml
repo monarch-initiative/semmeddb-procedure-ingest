@@ -22,6 +22,7 @@ dependencies = [
   "requests>=2.28.0",
   "duckdb>=1.4",            # preprocessing joins/IC over the source subset
   "umls-downloader>=0.1",   # credentialed SNOMED RF2 + MRCONSO fetch (download only; reader is broken)
+  "pystow",                 # shared download cache; where fetch_licensed.py parks the licensed inputs
   "bioversions",            # required transitive of umls-downloader's versioned download path
 ]
 

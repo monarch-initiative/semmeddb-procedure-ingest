@@ -6,6 +6,8 @@ SemMedDB edges, using:
   - LLM verdict       (>=1 PMID with predicted='True')
   - normalized IDs    (UMLS collapsed to MONDO/HP via nodes.normalized_id)
 
+Each surviving edge carries its supporting predicted='True' PMIDs (`publications`).
+
 Writes table `procedure_disease_clean` and `procedure_disease_clean.tsv` (KGX-ish).
 """
 import duckdb
@@ -41,16 +43,22 @@ WITH typed AS (
 )
 SELECT
   subject_id,
-  any_value(subject_label)    AS subject_label,
-  any_value(subject_category) AS subject_category,
+  -- max(), not any_value(): any_value() picks an arbitrary row per group and is
+  -- NOT stable across builds, which propagates into label text and grounding.
+  max(subject_label)    AS subject_label,
+  max(subject_category) AS subject_category,
   predicate,
   object_id,
-  any_value(object_label)     AS object_label,
-  any_value(object_category)  AS object_category,
+  max(object_label)     AS object_label,
+  max(object_category)  AS object_category,
   count(DISTINCT PMID)                                          AS n_pmids,
   count(DISTINCT CASE WHEN predicted='True' THEN PMID END)      AS n_pmids_true,
-  any_value(orig_subject_curie) AS example_subject_curie,
-  any_value(orig_object_curie)  AS example_object_curie
+  -- the LLM-accepted PMIDs themselves (already CURIE-formatted upstream), sorted
+  -- for build determinism and '|'-joined for the flat file
+  array_to_string(
+    list_sort(list(DISTINCT PMID) FILTER (WHERE predicted='True')), '|')  AS publications,
+  max(orig_subject_curie) AS example_subject_curie,
+  max(orig_object_curie)  AS example_object_curie
 FROM typed
 GROUP BY subject_id, predicate, object_id
 HAVING count(DISTINCT CASE WHEN predicted='True' THEN PMID END) >= 1
@@ -66,6 +74,6 @@ for r in con.execute("""
 con.execute("""
   COPY (SELECT * FROM procedure_disease_clean
         ORDER BY predicate, n_pmids_true DESC)
-  TO 'procedure_disease_clean.tsv' (HEADER, DELIMITER '\t')""")
-print("wrote procedure_disease_clean.tsv")
+  TO '{}' (HEADER, DELIMITER '\t')""".format(P.DATA / "procedure_disease_clean.tsv"))
+print(f"wrote {P.DATA / 'procedure_disease_clean.tsv'}")
 con.close()

@@ -150,6 +150,6 @@ for r in con.execute("""
      count(subject_ic) has_subj_ic
    FROM procedure_disease_clean""").fetchall():
     print(f"  total={r[0]:,}  object_ic set={r[1]:,}  subject_ic set={r[2]:,}")
-con.execute("COPY (SELECT * FROM umls2ncit) TO 'umls2ncit_procedures.tsv' (HEADER, DELIMITER '\t')")
+con.execute(f"COPY (SELECT * FROM umls2ncit) TO '{P.DATA}/umls2ncit_procedures.tsv' (HEADER, DELIMITER '\t')")
 con.close()
 print("wrote umls2ncit_procedures.tsv")

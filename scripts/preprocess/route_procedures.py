@@ -16,7 +16,7 @@ con = duckdb.connect(str(P.DB))
 con.execute("""
 CREATE OR REPLACE TABLE procedure_routing AS
 WITH j AS (
-  SELECT p.subject_id, any_value(p.subject_label) subject_label,
+  SELECT p.subject_id, max(p.subject_label) subject_label,
          max(u.ncit_semtype) ncit_semtype, max(u.ncit) ncit,
          list(DISTINCT p.predicate) preds, count(*) edges
   FROM procedure_disease_clean p

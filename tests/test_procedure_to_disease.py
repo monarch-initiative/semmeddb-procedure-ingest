@@ -12,7 +12,8 @@ from procedure_to_disease import transform_record
 @pytest.fixture(autouse=True)
 def _reset_node_dedup():
     """Node dedup is module-level state; clear it so tests don't interfere."""
-    mod._seen_nodes.clear()
+    mod._seen_procedures.clear()
+    mod._seen_diseases.clear()
     yield
 
 
@@ -57,9 +58,10 @@ def test_diagnoses_edge():
     a = assoc(run([DIAGNOSES_SNOMED]))
     assert a.subject == "SNOMED:84200003"
     assert a.predicate == "biolink:diagnoses"
-    assert a.original_predicate == "diagnoses"
+    assert a.original_predicate == "SEMMEDDB:DIAGNOSES"
     assert a.object == "MONDO:0005301"
     assert a.publications == ["PMID:11111", "PMID:22222"]
+    assert a.evidence_count == 2
     assert a.primary_knowledge_source == "infores:semmeddb"
     assert a.aggregator_knowledge_source == ["infores:monarchinitiative"]
 
@@ -67,7 +69,7 @@ def test_diagnoses_edge():
 def test_treats_predicate_mapping():
     a = assoc(run([TREATS_NCIT]))
     assert a.predicate == "biolink:treats_or_applied_or_studied_to_treat"
-    assert a.original_predicate == "treats"
+    assert a.original_predicate == "SEMMEDDB:TREATS"
 
 
 def test_emits_procedure_and_disease_nodes():
@@ -109,3 +111,4 @@ def test_missing_procedure_id_dropped():
 def test_no_publications_is_none():
     a = assoc(run([{**TREATS_NCIT, "publications": ""}]))
     assert a.publications is None
+    assert a.evidence_count is None

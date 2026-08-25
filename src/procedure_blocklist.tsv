@@ -1,0 +1,179 @@
+# Procedures excluded from the shipped edge set. Keyed on the UMLS CUI, NOT the
+# resolved procedure id: resolution can shift between builds and a resolved-id
+# blocklist then silently fails open.
+#
+# ncit_label is NCI Thesaurus (public domain). It is BLANK for CUIs with no NCIT
+# mapping — their only label source is UMLS/SNOMED, whose description text is not
+# openly redistributable and therefore must not live in this repo. Look those up
+# locally via procedure_disease_clean.subject_label.
+subject_cui	ncit_id	ncit_label	reason	edges_at_curation
+UMLS:C0087111	NCIT:C49236	Therapeutic Procedure	vacuous	2402
+UMLS:C0543467	NCIT:C15329	Surgical Procedure	vacuous	2028
+UMLS:C0728940	NCIT:C15232	Excision	vacuous	976
+UMLS:C0184661	NCIT:C25218	Clinical Intervention or Procedure	vacuous	832
+UMLS:C0013216	NCIT:C15986	Pharmacotherapy	drug-modality (belongs on drug axis)	715
+UMLS:C0011900	NCIT:C15220	Diagnosis Assessment	vacuous	587
+UMLS:C0040808			vacuous	574
+UMLS:C0441633	NCIT:C17999	Scan	vacuous	557
+UMLS:C0040732	NCIT:C15342	Transplantation	vacuous	548
+UMLS:C0524865			vacuous	490
+UMLS:C1533685	NCIT:C28160	Injection Route of Administration	vacuous	483
+UMLS:C0021107	NCIT:C201922	Surgical Implantation	vacuous	474
+UMLS:C0009429	NCIT:C15212	Multimodality Therapy	vacuous	447
+UMLS:C0025086			vacuous	447
+UMLS:C0043299	NCIT:C38101	X-Ray Imaging	vacuous	391
+UMLS:C0199176	NCIT:C54404	Intent For Prophylaxis	vacuous	380
+UMLS:C1708063	NCIT:C45792	First-Line Therapy	vacuous	297
+UMLS:C0015252			vacuous	285
+UMLS:C0032042	NCIT:C116558	Placebo Administration	drug-modality (belongs on drug axis)	270
+UMLS:C0031740	NCIT:C15300	Photodynamic Therapy	drug-modality (belongs on drug axis)	225
+UMLS:C0430022			vacuous	218
+UMLS:C0596473			vacuous	216
+UMLS:C0011906			vacuous	213
+UMLS:C0808232			vacuous	198
+UMLS:C0857127	NCIT:C158876	Induction Therapy	vacuous	193
+UMLS:C0220908	NCIT:C15419	Disease Screening	vacuous	185
+UMLS:C0035110	NCIT:C50830	Repeated Surgical Procedure	vacuous	175
+UMLS:C0149783	NCIT:C15370	Steroid Therapy	drug-modality (belongs on drug axis)	155
+UMLS:C0001563			drug-modality (belongs on drug axis)	141
+UMLS:C0947647	NCIT:C48310	Manipulation	non-procedure semtype: Activity	139
+UMLS:C0459914			vacuous	120
+UMLS:C0085533	NCIT:C15360	Adjuvant Chemotherapy	drug-modality (belongs on drug axis)	112
+UMLS:C0338237	NCIT:C15620	Antibiotic Therapy	drug-modality (belongs on drug axis)	104
+UMLS:C0279025	NCIT:C15445	Hormone Therapy	drug-modality (belongs on drug axis)	103
+UMLS:C1511790	NCIT:C16210	Detection Assessment	vacuous	101
+UMLS:C0012737	NCIT:C15227	Dissection	vacuous	99
+UMLS:C0750430	NCIT:C85833	Work-Up Examination	vacuous	88
+UMLS:C2718059	NCIT:C84342	Personalized Medicine	vacuous	87
+UMLS:C0392920	NCIT:C15632	Chemotherapy	drug-modality (belongs on drug axis)	85
+UMLS:C0374711	NCIT:C53611	Repair	non-procedure semtype: Occupational Activity	84
+UMLS:C0349707	NCIT:C15631	Aspiration	SNOMED qualifier/action, not a procedure	83
+UMLS:C2827774	NCIT:C85582	Current Therapy	vacuous	82
+UMLS:C0013218	NCIT:C16144	Combination Drug Therapy	drug-modality (belongs on drug axis)	78
+UMLS:C0184898	NCIT:C15384	Surgical Incision	vacuous	76
+UMLS:C0001701	NCIT:C39774	Aerobic Exercise	non-procedure semtype: Daily or Recreational Activity	66
+UMLS:C1516635	NCIT:C15786	Clinical Treatment	vacuous	62
+UMLS:C0281163	NCIT:C17874	Educational Intervention	non-procedure semtype: Educational Activity	56
+UMLS:C0280274	NCIT:C16119	Antiviral Therapy	drug-modality (belongs on drug axis)	48
+UMLS:C0020944	NCIT:C142778	Immobilization	non-procedure semtype: Activity	47
+UMLS:C0020587	NCIT:C15420	Hypnotherapy	non-procedure semtype: Mental Process	46
+UMLS:C0949266	NCIT:C142589	Investigational Treatment	vacuous	43
+UMLS:C0005491	NCIT:C15186	Biofeedback	non-procedure semtype: Mental Process	38
+UMLS:C0184922	NCIT:C15386	Incisional Biopsy	SNOMED qualifier/action, not a procedure	38
+UMLS:C0007430	NCIT:C38045	Catheterization	vacuous	37
+UMLS:C0596171	NCIT:C18075	Tissue Engineering	non-procedure semtype: Occupational Activity	36
+UMLS:C0013969	NCIT:C52641	Emergency Care	vacuous	31
+UMLS:C0376495	NCIT:C54055	Retreatment	vacuous	27
+UMLS:C0026868	NCIT:C67033	Music Therapy	non-procedure semtype: Mental Process	25
+UMLS:C0920298			drug regimen/protocol	25
+UMLS:C0021440	NCIT:C38275	Intravenous Infusion	non-procedure semtype: Functional Concept	24
+UMLS:C0740166			SNOMED qualifier/action, not a procedure	24
+UMLS:C0019014	NCIT:C172594	Hemofiltration	non-procedure semtype: Activity	21
+UMLS:C0175795	NCIT:C102246	Oral Medication	drug-modality (belongs on drug axis)	20
+UMLS:C0011121	NCIT:C68769	Decontamination	non-procedure semtype: Activity	18
+UMLS:C2922974			vacuous	18
+UMLS:C0031140	NCIT:C201866	Cornell Assessment of Pediatric Delirium	non-procedure semtype: Intellectual Product	17
+UMLS:C0282333	NCIT:C15316	Relaxation Therapy	non-procedure semtype: Mental Process	17
+UMLS:C0032740	NCIT:C191605	Positive End-Expiratory Pressure	non-procedure semtype: Quantitative Concept	16
+UMLS:C0040861			vacuous	15
+UMLS:C0200189	NCIT:C147467	Eye Fundus Photography	non-procedure semtype: Occupational Activity	14
+UMLS:C0038842			vacuous	13
+UMLS:C0042815	NCIT:C21120	Visual Analog Pain Scale	non-procedure semtype: Intellectual Product	13
+UMLS:C1283066			SNOMED qualifier/action, not a procedure	13
+UMLS:C1519252	NCIT:C15729	Sequential Treatment	vacuous	13
+UMLS:C4727545			drug regimen/protocol	12
+UMLS:C0392943			drug regimen/protocol	11
+UMLS:C0581602			vacuous	11
+UMLS:C0003827	NCIT:C67031	Art Therapy	non-procedure semtype: Mental Process	10
+UMLS:C0008971			vacuous	9
+UMLS:C2348331	NCIT:C71137	Dose Regimen	vacuous	9
+UMLS:C0034386	NCIT:C71902	Quarantine	vacuous	8
+UMLS:C0150627	NCIT:C15375	Imagery Therapy	non-procedure semtype: Mental Process	8
+UMLS:C4525269			drug regimen/protocol	8
+UMLS:C0451306	NCIT:C74982	Mini-Mental Status Exam	non-procedure semtype: Intellectual Product	7
+UMLS:C0262718	NCIT:C155847	Kegel Exercise	non-procedure semtype: Daily or Recreational Activity	6
+UMLS:C0915342	NCIT:C11197	FOLFOX Regimen	drug regimen/protocol	6
+UMLS:C4727581			drug regimen/protocol	6
+UMLS:C0872187	NCIT:C18472	High Throughput Screening	non-procedure semtype: Activity	5
+UMLS:C1328232	NCIT:C140094	BR Regimen	drug regimen/protocol	5
+UMLS:C1443867			vacuous	5
+UMLS:C1827449			vacuous	5
+UMLS:C2713543	NCIT:C93302	Neurofeedback	non-procedure semtype: Mental Process	5
+UMLS:C0007471	NCIT:C15199	Cauterization	SNOMED qualifier/action, not a procedure	4
+UMLS:C0022206	NCIT:C21057	Isometric Exercise	non-procedure semtype: Daily or Recreational Activity	4
+UMLS:C0250336			drug regimen/protocol	4
+UMLS:C0684199	NCIT:C15718	Homeopathy Therapy	non-procedure semtype: Biomedical Occupation or Discipline	4
+UMLS:C4763593			drug regimen/protocol	4
+UMLS:C0163868			drug regimen/protocol	3
+UMLS:C0442977	NCIT:C181655	Electrocardiogram Analysis	non-procedure semtype: Activity	3
+UMLS:C0950521	NCIT:C9874	CMF Regimen	drug regimen/protocol	3
+UMLS:C0053064			drug regimen/protocol	2
+UMLS:C0055599	NCIT:C9550	Bleomycin/Cyclophosphamide/Doxorubicin/Prednisone/Vincristine	drug regimen/protocol	2
+UMLS:C0199236	NCIT:C15407	Family Study	vacuous	2
+UMLS:C0441592			SNOMED qualifier/action, not a procedure	2
+UMLS:C0524811	NCIT:C15654	Fractionated Radiotherapy	vacuous	2
+UMLS:C0872279	NCIT:C154219	Resistance Training	non-procedure semtype: Daily or Recreational Activity	2
+UMLS:C1443873			vacuous	2
+UMLS:C1449699	NCIT:C28384	Tumor Burden	non-procedure semtype: Quantitative Concept	2
+UMLS:C1880658	NCIT:C63593	FOLFIRI Regimen	drug regimen/protocol	2
+UMLS:C1956962	NCIT:C63597	XELOX Regimen	drug regimen/protocol	2
+UMLS:C2347900	NCIT:C68621	Rechallenge	vacuous	2
+UMLS:C3897730			drug regimen/protocol	2
+UMLS:C4684873			drug regimen/protocol	2
+UMLS:C5205310			drug regimen/protocol	2
+UMLS:C0003393			drug regimen/protocol	1
+UMLS:C0006042	NCIT:C81305	Bottle Feeding	non-procedure semtype: Activity	1
+UMLS:C0050379	NCIT:C9508	Bleomycin/Dacarbazine/Doxorubicin/Vincristine	drug regimen/protocol	1
+UMLS:C0050380	NCIT:C9509	ABVD Regimen	drug regimen/protocol	1
+UMLS:C0053334	NCIT:C9526	Bleomycin/Cisplatin/Etoposide	drug regimen/protocol	1
+UMLS:C0054427	NCIT:C9533	CAF Regimen	drug regimen/protocol	1
+UMLS:C0055598	NCIT:C9549	CHOP Regimen	drug regimen/protocol	1
+UMLS:C0056286	NCIT:C9567	COPP Regimen	drug regimen/protocol	1
+UMLS:C0056633	NCIT:C9573	CVP Regimen	drug regimen/protocol	1
+UMLS:C0060133	NCIT:C9595	FEC Regimen	drug regimen/protocol	1
+UMLS:C0065212			drug regimen/protocol	1
+UMLS:C0065442	NCIT:C9603	Carmustine/Cyclophosphamide/Melphalan/Prednisone/Vincristine	drug regimen/protocol	1
+UMLS:C0111197	NCIT:C9685	CTC Regimen	drug regimen/protocol	1
+UMLS:C0164511	NCIT:C63408	MVP Regimen	drug regimen/protocol	1
+UMLS:C0165767			drug regimen/protocol	1
+UMLS:C0184958			vacuous	1
+UMLS:C0185023			SNOMED qualifier/action, not a procedure	1
+UMLS:C0203939			vacuous	1
+UMLS:C0281534	NCIT:C10836	Fluorouracil/Irinotecan/Leucovorin Calcium	drug regimen/protocol	1
+UMLS:C0311130			drug regimen/protocol	1
+UMLS:C0376707			vacuous	1
+UMLS:C0393023	NCIT:C9760	R-CHOP Regimen	drug regimen/protocol	1
+UMLS:C0441636			SNOMED qualifier/action, not a procedure	1
+UMLS:C0454287	NCIT:C21058	Isotonic Exercise	non-procedure semtype: Daily or Recreational Activity	1
+UMLS:C0520526	NCIT:C9734	Cisplatin/Cyclophosphamide/Doxorubicin/Etoposide	drug regimen/protocol	1
+UMLS:C0672257	NCIT:C10228	Cisplatin/Paclitaxel	drug regimen/protocol	1
+UMLS:C0699782	NCIT:C121360	Manual Muscle Testing	non-procedure semtype: Intellectual Product	1
+UMLS:C1135626			drug regimen/protocol	1
+UMLS:C1319201	NCIT:C115795	Timed Up and Go Functional Test	non-procedure semtype: Intellectual Product	1
+UMLS:C1322279	NCIT:C28023	Dilate	non-procedure semtype: Activity	1
+UMLS:C1518823	NCIT:C20119	PSA Velocity	non-procedure semtype: Quantitative Concept	1
+UMLS:C1880435	NCIT:C63421	Cyclophosphamide/Epirubicin Regimen	drug regimen/protocol	1
+UMLS:C1880814			drug regimen/protocol	1
+UMLS:C1881367	NCIT:C64732	Dexamethasone/Lenalidomide Regimen	drug regimen/protocol	1
+UMLS:C2986488	NCIT:C94363	Upstaging	vacuous	1
+UMLS:C3491856			drug regimen/protocol	1
+UMLS:C4331246			vacuous	1
+UMLS:C4526520			drug regimen/protocol	1
+UMLS:C4526521			drug regimen/protocol	1
+UMLS:C4526525			drug regimen/protocol	1
+UMLS:C4526526			drug regimen/protocol	1
+UMLS:C4526537			drug regimen/protocol	1
+UMLS:C4526543			drug regimen/protocol	1
+UMLS:C4526548			drug regimen/protocol	1
+UMLS:C4526552			drug regimen/protocol	1
+UMLS:C4722084			drug regimen/protocol	1
+UMLS:C4727544			drug regimen/protocol	1
+UMLS:C4744360			drug regimen/protocol	1
+UMLS:C5204844			drug regimen/protocol	1
+UMLS:C5204863			drug regimen/protocol	1
+UMLS:C5204874			drug regimen/protocol	1
+UMLS:C5204967			drug regimen/protocol	1
+UMLS:C5204976			drug regimen/protocol	1
+UMLS:C5206430			drug regimen/protocol	1
+UMLS:C5237304			drug regimen/protocol	1
+UMLS:C5420482			drug regimen/protocol	1

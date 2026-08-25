@@ -53,19 +53,36 @@ with zipfile.ZipFile(MRCONSO_ZIP) as zf:
                 xref[cui][sab].add((row[C["CODE"]], row[C["STR"]]))
 print(f"scanned {n:,} MRCONSO rows; matched {len(xref)} CUIs", flush=True)
 
-# write long-form table: cui, sab, code, str (one pref str per code)
+# Write long-form table: cui, sab, code, str (ONE representative string per code).
+#
+# This must be deterministic. `pairs` is a set of tuples, so "first one wins" depends
+# on per-process hash randomisation and genuinely produced different builds: code
+# 257940003 kept "Transposition - action" in one run and "Transposition" in the next.
+# Downstream, stamp_best_ic keys its qualifier/action detection on this string, so the
+# instability propagated all the way into which SNOMED id a procedure got and which
+# edges shipped.
+#
+# So: iterate in sorted order, and prefer a string that carries SNOMED's semantic tag
+# — the FSN always does ("... (qualifier value)", "... - action"), and that tag is
+# exactly what the downstream qualifier check needs to see.
+def _representative(strings: list[str]) -> str:
+    strings = sorted(strings)
+    tagged = [s for s in strings if s.endswith(")") or " - action" in s.lower()]
+    return (tagged or strings)[0]
+
+
 rows = []
-for cui, sabs in xref.items():
-    for sab, pairs in sabs.items():
-        seen = set()
+for cui, sabs in sorted(xref.items()):
+    for sab, pairs in sorted(sabs.items()):
+        by_code: dict[str, list[str]] = {}
         for code, s in pairs:
-            if code in seen: continue
-            seen.add(code)
-            rows.append((cui, sab, code, s))
+            by_code.setdefault(code, []).append(s)
+        for code in sorted(by_code):
+            rows.append((cui, sab, code, _representative(by_code[code])))
 con = duckdb.connect(str(P.DB))
 con.execute("CREATE OR REPLACE TABLE cui_xref(cui VARCHAR, sab VARCHAR, code VARCHAR, str VARCHAR)")
 con.executemany("INSERT INTO cui_xref VALUES (?,?,?,?)", rows)
-con.execute("COPY (SELECT * FROM cui_xref) TO 'cui_xref.tsv' (HEADER, DELIMITER '\t')")
+con.execute(f"COPY (SELECT * FROM cui_xref) TO '{P.DATA}/cui_xref.tsv' (HEADER, DELIMITER '\t')")
 
 def cov(cuis, sab):
     return sum(1 for c in cuis if c in xref and sab in xref[c])

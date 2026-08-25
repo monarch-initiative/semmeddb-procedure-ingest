@@ -11,6 +11,7 @@ reader:
   columns:
     - "procedure_id"
     - "procedure_label"
+    - "procedure_category"
     - "predicate"
     - "disease_id"
     - "disease_label"
@@ -37,6 +38,7 @@ writer:
     - "original_predicate"
     - "object"
     - "publications"
+    - "evidence_count"
     - "primary_knowledge_source"
     - "aggregator_knowledge_source"
     - "knowledge_level"

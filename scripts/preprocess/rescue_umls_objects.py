@@ -42,6 +42,28 @@ UPDATE procedure_disease_clean SET
   object_rescued = COALESCE(object_rescued, 'false')
 """)
 
+# Deprecated MONDO/HP ids: the SemMedDB/NodeNorm side can hand us a term the
+# ontology has since obsoleted. Point it at the successor so the edge lands on a
+# live class (and picks up IC downstream) instead of shipping a dead id.
+# Follows one hop only — enough in practice, and a chain would need cycle care.
+con.execute(f"""
+CREATE OR REPLACE TEMP TABLE obsolete_map AS
+SELECT obsolete_id, replaced_by, replaced_by_label
+FROM read_csv('{P.OBSOLETE_MAP}', delim='\t', header=true)
+""")
+obs_hits = con.execute("""
+SELECT count(*) FROM procedure_disease_clean p
+JOIN obsolete_map o ON o.obsolete_id = p.final_object_id
+""").fetchone()[0]
+con.execute("""
+UPDATE procedure_disease_clean p SET
+  final_object_id    = o.replaced_by,
+  final_object_label = nullif(o.replaced_by_label, '')
+FROM obsolete_map o
+WHERE o.obsolete_id = p.final_object_id
+""")
+print(f"obsolete objects remapped:    {obs_hits:,}")
+
 tot = con.execute("SELECT count(*) FROM procedure_disease_clean").fetchone()[0]
 umls_before = con.execute("""SELECT count(*) FROM procedure_disease_clean
   WHERE object_id NOT LIKE 'MONDO:%' AND object_id NOT LIKE 'HP:%'""").fetchone()[0]
@@ -56,8 +78,8 @@ print(f"  rescued to MONDO:           {rescued:,}")
 print(f"UMLS-residual objects after:  {umls_after:,}")
 print(f"now MONDO/HP-grounded:        {tot - umls_after:,}  ({(tot-umls_after)/tot:.1%})")
 
-con.execute("""COPY (SELECT * FROM procedure_disease_clean
-  ORDER BY predicate, n_pmids_true DESC) TO 'procedure_disease_clean.tsv'
+con.execute(f"""COPY (SELECT * FROM procedure_disease_clean
+  ORDER BY predicate, n_pmids_true DESC) TO '{P.DATA}/procedure_disease_clean.tsv'
   (HEADER, DELIMITER '\t')""")
 print("rewrote procedure_disease_clean.tsv")
 con.close()

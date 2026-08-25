@@ -63,7 +63,7 @@ for r in con.execute("""
 print("\n=== top bucket-C edges now with SNOMED IC ===")
 for r in con.execute("""
   SELECT p.subject_label ||' -['||p.predicate||']-> '|| p.object_label AS edge,
-         'SNOMED:'||ps.sctid AS sctid, round(ps.snomed_ic,1) AS sn_ic, p.n_pmids_true AS n
+         'SNOMEDCT:'||ps.sctid AS sctid, round(ps.snomed_ic,1) AS sn_ic, p.n_pmids_true AS n
   FROM procedure_disease_clean p JOIN proc_sn ps USING(subject_id)
   WHERE p.subject_ic IS NULL AND ps.snomed_ic >= 8
   ORDER BY p.n_pmids_true DESC LIMIT 15""").fetchall():

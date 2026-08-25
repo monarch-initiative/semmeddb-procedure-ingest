@@ -20,7 +20,12 @@ DB = Path(os.environ.get("SEMMEDDB_DB", DATA / "semmeddb.duckdb"))
 SEMMEDDB_PARQUET = DATA / "semmeddb_subset.parquet"   # MUST include predicted/support cols
 MONDO_SSSOM = DATA / "mondo.sssom.tsv"
 HPO_SSSOM = DATA / "hpo-snomed.sssom.tsv"
+MONDO_OBO = DATA / "mondo.obo"
+HP_OBO = DATA / "hp.obo"
+# both derived from the two OBO files above by build_subclass_edges.py
 MONDO_EDGES = DATA / "mondo_edges.tsv"
+OBSOLETE_MAP = DATA / "obsolete_replaced_by.tsv"
+ONTOLOGY_LABELS = DATA / "ontology_labels.tsv"
 
 # NodeNorm categorisation snapshot — versioned artifact so builds don't re-hit
 # the (moving-target) API. Committed/hosted alongside the source for reproducibility.

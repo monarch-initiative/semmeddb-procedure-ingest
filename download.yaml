@@ -2,28 +2,44 @@
 #
 # OPEN, redistributable sources only. License-gated sources (SNOMED CT RF2,
 # UMLS MRCONSO) are NOT listed here — they are fetched by scripts/fetch_licensed.py
-# using UMLS_API_KEY, cached locally, gitignored, and NEVER re-emitted. See ARCHITECTURE.md.
+# using UMLS_API_KEY, cached in the shared pystow store, gitignored, and NEVER
+# re-emitted. See ARCHITECTURE.md.
 
-downloads:
-  # --- Primary source: the LLM-verified SemMedDB subset (procedure/disease predications) ---
-  # Too large + license-flavored for a GitHub release; host in a data bucket (S3/GCS) or Zenodo.
-  # TODO: replace with the published bucket/Zenodo URL once uploaded.
-  - url: "{SEMMEDDB_SUBSET_URL}"          # e.g. https://<bucket>/semmeddb-llm-verified/results_no_abstract_with_names.parquet
-    local_name: "data/semmeddb_subset.parquet"
+# --- Primary source: the LLM-verified SemMedDB subset, sliced to this ingest ---
+# The upstream subset is ~6.2 GB / 26.7M predications across all predicates. This
+# ingest reads two predicates and eight columns of it, which is ~15 MB — so the
+# published artifact is the SLICE (scripts/make_source_subset.py), served as a
+# plain GitHub release asset. No bucket or Zenodo deposit needed.
+- url: "https://github.com/monarch-initiative/semmeddb-procedure-ingest/releases/download/{SUBSET_RELEASE_TAG}/semmeddb_subset.parquet"
+  local_name: "data/semmeddb_subset.parquet"
 
-  # --- NCIt (public domain): code->UMLS_CUI (<P207>) + procedure hierarchy for structural IC ---
-  - url: "https://evs.nci.nih.gov/ftp1/NCI_Thesaurus/Thesaurus.FLAT.zip"
-    local_name: "data/ncit_flat.zip"
-  - url: "https://evs.nci.nih.gov/ftp1/NCI_Thesaurus/Thesaurus.OWL.zip"
-    local_name: "data/ncit_owl.zip"
+# --- NodeNorm categorisation snapshot ---
+# NodeNorm is a moving target, so the categories/normalized_ids are snapshotted and
+# shipped as a versioned artifact rather than re-fetched per build. Without this the
+# build silently hits the live API and the "pinned" version in the receipt is a lie.
+- url: "https://github.com/monarch-initiative/semmeddb-procedure-ingest/releases/download/{SUBSET_RELEASE_TAG}/nodes_snapshot.parquet"
+  local_name: "data/nodes_snapshot.parquet"
 
-  # --- Monarch mapping commons (open): UMLS/SNOMED -> MONDO, SNOMED -> HP ---
-  - url: "https://raw.githubusercontent.com/monarch-initiative/monarch-mapping-commons/main/mappings/mondo.sssom.tsv"
-    local_name: "data/mondo.sssom.tsv"
-  - url: "https://raw.githubusercontent.com/monarch-initiative/monarch-mapping-commons/main/mappings/hpo-snomed.sssom.tsv"
-    local_name: "data/hpo-snomed.sssom.tsv"
+# --- NCIt (public domain): code->UMLS_CUI (<P207>) + procedure hierarchy for structural IC ---
+- url: "https://evs.nci.nih.gov/ftp1/NCI_Thesaurus/Thesaurus.FLAT.zip"
+  local_name: "data/ncit_flat.zip"
+- url: "https://evs.nci.nih.gov/ftp1/NCI_Thesaurus/Thesaurus.OWL.zip"
+  local_name: "data/ncit_owl.zip"
 
-  # --- MONDO+HP graph (open): subclass edges for disease/phenotype structural IC ---
-  # (pulled from the Monarch KG / phenio; adjust to your pinned kg-phenio release)
-  - url: "{MONDO_EDGES_URL}"              # e.g. mondo_edges.tsv (biolink:subclass_of edges)
-    local_name: "data/mondo_edges.tsv"
+# --- Monarch mapping commons (open): UMLS/SNOMED -> MONDO, SNOMED -> HP ---
+# NOTE: mondo.sssom.tsv is no longer carried in monarch-mapping-commons (that
+# path 404s now); it ships with the Mondo release itself.
+- url: "http://purl.obolibrary.org/obo/mondo/mappings/mondo.sssom.tsv"
+  local_name: "data/mondo.sssom.tsv"
+- url: "https://raw.githubusercontent.com/monarch-initiative/monarch-mapping-commons/main/mappings/hpo-snomed.sssom.tsv"
+  local_name: "data/hpo-snomed.sssom.tsv"
+
+# --- MONDO + HP class hierarchy (open): subclass edges for disease/phenotype IC ---
+# Canonical OBO releases rather than a Monarch KG dump: the IC we want is over the
+# ontology's own hierarchy, these self-version via their `data-version:` header,
+# and it is ~64 MB instead of a 330 MB tarball. build_subclass_edges.py turns them
+# into data/mondo_edges.tsv.
+- url: "http://purl.obolibrary.org/obo/mondo.obo"
+  local_name: "data/mondo.obo"
+- url: "http://purl.obolibrary.org/obo/hp.obo"
+  local_name: "data/hp.obo"

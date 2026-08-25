@@ -178,6 +178,15 @@ def main():
         con.execute(f"INSERT OR REPLACE INTO nodes SELECT * FROM read_parquet('{snapshot}')")
         loaded_snapshot = True
 
+    if not loaded_snapshot and not args.refresh and not args.summary_only:
+        sys.exit(
+            f"ERROR: NodeNorm snapshot {snapshot} not found.\n"
+            "  It is a versioned build input (see download.yaml) — run `just download`.\n"
+            "  Hitting the live API instead would silently change the categorisation while\n"
+            "  versions.py still reports NODENORM_VERSION as 'pinned'. Pass --refresh to\n"
+            "  deliberately re-fetch and rewrite the snapshot."
+        )
+
     if not args.summary_only and not loaded_snapshot:
         # distinct endpoints not yet cached
         todo = [r[0] for r in con.execute(f"""

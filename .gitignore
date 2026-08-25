@@ -49,7 +49,8 @@ data/licensed/
 *.duckdb
 *.duckdb.wal
 *mrconso*
-*Snomed*RF2* SnomedCT_*
+*Snomed*RF2*
+SnomedCT_*
 
 # uv
 uv.lock
