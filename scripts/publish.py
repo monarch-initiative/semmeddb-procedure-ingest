@@ -2,21 +2,20 @@
 """
 Publish this build's artifacts to the BDC bucket.
 
-Layout, one prefix per emitted transform:
+Layout: ONE top-level prefix per ingest repo, dated immutable builds, no
+latest/ mirror — consumers resolve the newest dated prefix (or pin a date):
 
-    gs://monarch-bdc-kg/sources/<ingest>/<YYYY-MM-DD>/   immutable dated build
-    gs://monarch-bdc-kg/sources/<ingest>/latest/         mirror of the newest build
+    gs://monarch-bdc-kg/semmeddb/<YYYY-MM-DD>/
+        procedure_to_disease_ncit_{nodes,edges}.jsonl        open tier
+        procedure_to_disease_snomedct_{nodes,edges}.jsonl    RESTRICTED tier
+        release-metadata.yaml                                kozahub receipt
+        README.md                                            licensing + QA caveats
 
-`latest/` is written with `rsync -d`, so it is a CLEAN mirror: files that a previous
-build produced and this one did not are deleted rather than left to rot. That matters
-here — the pre-split build left a 69,568-edge artifact sitting in the bucket, and a
-consumer globbing the prefix would have merged it alongside its own replacement.
-
-Consumers should read `latest/`. The dated prefixes are the audit trail.
-
-Each prefix gets `release-metadata.yaml` (the kozahub receipt: input versions, build
-version, artifact hashes) and a README recording licensing and QA caveats, so an
-artifact found in the bucket is self-describing.
+Both license tiers ship in one dated dir, distinguished by filename; the
+README records the per-tier licensing so an artifact found in the bucket is
+self-describing. The dated dir is written with `rsync -d`, so a same-date
+republish is a clean overwrite (files the previous run produced and this one
+did not are removed rather than left to rot).
 
 Usage:
     just publish                 # date from release-metadata.yaml generated_at
@@ -33,17 +32,17 @@ import yaml
 REPO = Path(__file__).resolve().parent.parent
 OUTPUT = REPO / "output"
 BUCKET = os.environ.get("BDC_BUCKET", "gs://monarch-bdc-kg")
-PREFIX = "sources"
+INGEST = "semmeddb"
 
-# transform stem -> (bucket ingest name, licensing note for the README)
-INGESTS = {
+# transform stem -> licensing note for the README
+TIERS = {
     "procedure_to_disease_ncit": (
-        "semmeddb-procedure-ncit",
+        "ncit",
         "**OPEN.** NCIT is public domain and objects are MONDO/HP, so this artifact\n"
         "contains no licensed description text and is publishable as a normal Monarch ingest.",
     ),
     "procedure_to_disease_snomedct": (
-        "semmeddb-procedure-snomedct",
+        "snomedct",
         "**RESTRICTED — DO NOT REDISTRIBUTE.** Procedure node labels are SNOMED CT\n"
         "description text, which is licensed. Private bucket and internal use only.\n"
         "Rebuild with `OUTPUT_TIER=open` to blank the labels for any public release.",
@@ -85,8 +84,12 @@ def main() -> None:
     print(f"publishing build={build} commit={commit} date={date}"
           f"{'  [DRY RUN]' if dry else ''}")
 
-    staging = OUTPUT / ".publish"
-    for stem, (ingest, licensing) in INGESTS.items():
+    stage = OUTPUT / ".publish" / INGEST
+    stage.mkdir(parents=True, exist_ok=True)
+    (stage / meta_path.name).write_bytes(meta_path.read_bytes())
+
+    tier_sections = []
+    for stem, (tier, licensing) in TIERS.items():
         edges = OUTPUT / f"{stem}_edges.jsonl"
         nodes = OUTPUT / f"{stem}_nodes.jsonl"
         missing = [p.name for p in (edges, nodes) if not p.exists()]
@@ -95,30 +98,33 @@ def main() -> None:
 
         n_edges = sum(1 for _ in edges.open())
         n_nodes = sum(1 for _ in nodes.open())
-
-        stage = staging / ingest
-        stage.mkdir(parents=True, exist_ok=True)
-        for src in (edges, nodes, meta_path):
+        for src in (edges, nodes):
             (stage / src.name).write_bytes(src.read_bytes())
-        (stage / "README.md").write_text(
-            f"# {ingest}\n\n"
-            f"Procedure→Disease/Phenotype edges from the LLM-verified SemMedDB subset.\n\n"
-            f"- edges: {n_edges:,}   nodes: {n_nodes:,}\n"
-            f"- build_version: `{build}`\n"
-            f"- source commit: `{commit}`\n"
-            f"- published: {date}\n"
-            f"- predicates: `biolink:diagnoses`, `biolink:treats_or_applied_or_studied_to_treat`\n\n"
-            f"## Licensing\n\n{licensing}\n\n{CAVEATS}"
+        tier_sections.append(
+            f"### {tier}\n\n"
+            f"- files: `{edges.name}`, `{nodes.name}`\n"
+            f"- edges: {n_edges:,}   nodes: {n_nodes:,}\n\n"
+            f"{licensing}"
         )
+        print(f"{tier}: {n_edges:,} edges / {n_nodes:,} nodes")
 
-        dated = f"{BUCKET}/{PREFIX}/{ingest}/{date}/"
-        latest = f"{BUCKET}/{PREFIX}/{ingest}/latest/"
-        print(f"\n{ingest}: {n_edges:,} edges / {n_nodes:,} nodes")
-        run(["gsutil", "-m", "rsync", "-d", str(stage), dated], dry)
-        # -d makes latest/ a clean mirror, not an accumulating pile
-        run(["gsutil", "-m", "rsync", "-d", dated, latest], dry)
+    (stage / "README.md").write_text(
+        f"# {INGEST}\n\n"
+        f"Procedure→Disease/Phenotype edges from the LLM-verified SemMedDB subset,\n"
+        f"in two license tiers distinguished by filename.\n\n"
+        f"- build_version: `{build}`\n"
+        f"- source commit: `{commit}`\n"
+        f"- published: {date}\n"
+        f"- predicates: `biolink:diagnoses`, `biolink:treats_or_applied_or_studied_to_treat`\n\n"
+        f"## Licensing, per tier\n\n"
+        + "\n\n".join(tier_sections)
+        + f"\n\n{CAVEATS}"
+    )
 
-    print("\ndone. consumers should read <ingest>/latest/; dated prefixes are the audit trail.")
+    dated = f"{BUCKET}/{INGEST}/{date}/"
+    run(["gsutil", "-m", "rsync", "-d", str(stage), dated], dry)
+
+    print(f"\ndone: {dated}\nconsumers resolve the newest dated prefix (or pin); dated prefixes are the audit trail.")
 
 
 if __name__ == "__main__":

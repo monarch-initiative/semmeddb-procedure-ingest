@@ -26,7 +26,7 @@ procedure-IC threshold.
 just download          # open inputs (needs SUBSET_RELEASE_TAG)
 just fetch-licensed    # SNOMED RF2 + UMLS MRCONSO (needs UMLS_API_KEY)
 just run               # test + preprocess + transform + metadata
-just publish           # upload output/ to the BDC bucket (date + latest)
+just publish           # upload output/ to gs://monarch-bdc-kg/semmeddb/<date>/
 just test
 ```
 

@@ -52,7 +52,8 @@ transform-all: preprocess
 metadata:
     uv run python scripts/write_metadata.py
 
-# Publish output/ to the BDC bucket as <ingest>/<date>/ and a clean <ingest>/latest/
+# Publish output/ to gs://monarch-bdc-kg/<ingest>/<date>/ (immutable; rsync -d, so a
+# same-date republish is a clean overwrite). Consumers resolve the newest dated prefix.
 # Pass a date to override, e.g. `just publish 2026-08-25`. DRY_RUN=1 to preview.
 [group('ingest')]
 publish DATE="":
